@@ -45,30 +45,19 @@ export default {
       this.toDo = toDo;
       this.doing = doing;
       this.done = done;
-
-      /* console.log(
-        "To do: ",
-        this.toDo,
-        "doing: ",
-        this.doing,
-        "done: ",
-        this.done
-      );*/
     },
 
     getData() {
-      const fetch = require("node-fetch"); // key=e0bb68c2d5670dfd4e12f6b8717522eb&token=3d4f06e55cba12ccaeb5d5698c4613858ba7783c540f0e1d084b3e348063749a
+      const fetch = require("node-fetch");
       fetch("https://api.trello.com/1/boards/5e93f15200669f33e504f331/cards", {
         method: "GET"
       })
         .then(response => {
           console.log(`Response: ${response.status} ${response.statusText}`);
-
           return response.text(response);
         })
         .then(data => {
           this.data = JSON.parse(data);
-          console.log(this.data);
           this.convertData();
           this.setStates();
         })
