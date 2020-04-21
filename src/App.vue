@@ -12,7 +12,6 @@ export default {
   data() {
     return {
       data: Object,
-      lists: [],
       toDo: 0,
       doing: 0,
       done: 0
