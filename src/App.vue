@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import Trello from "trello"
+import Trello from "trello";
 export default {
   data() {
     return {
@@ -16,8 +16,22 @@ export default {
       toDo: 0,
       doing: 0,
       done: 0,
+      btnCallback: function (t, opts) {
+        console.log(t, opts);
+        return t.popup({
+          title: 'Snooze Card',
+          items: [{
+            text: 'Choose Time',
+            callback: function (t, opts) { console.log(t, opts); }
+          }, {
+            text: 'In 1 hour',
+            callback: function (t, opts) { console.log(t, opts); }
+          }]
+        });
+      }
     };
   },
+  
   created() {
     this.initTrello();
     setInterval(() => {
@@ -32,7 +46,20 @@ export default {
       );
       var cardsPromise = trello.getListsOnBoard("5e93f15200669f33e504f331");
       cardsPromise.then((cards) => {
-        console.log(cards)
+        console.log(cards);
+      });
+
+      trello.initialize({
+        "card-buttons": function(t, options) {
+          console.log(t, options)
+          return [
+            {
+              text: "Estimate Size",
+              icon: "https://cdn.glitch.com/1b42d7fe-bda8-4af8-a6c8-eff0cea9e08a%2Frocket-ship.png?1494946700421",
+              callback: this.btnCallback
+            },
+          ];
+        },
       });
     },
 
