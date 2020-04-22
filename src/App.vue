@@ -8,24 +8,37 @@
 </template>
 
 <script>
+import Trello from "trello"
 export default {
   data() {
     return {
       data: Object,
       toDo: 0,
       doing: 0,
-      done: 0
+      done: 0,
     };
   },
   created() {
+    this.initTrello();
     setInterval(() => {
       this.getData();
     }, 1000);
   },
   methods: {
+    initTrello() {
+      let trello = new Trello(
+        "e0bb68c2d5670dfd4e12f6b8717522eb",
+        "3d4f06e55cba12ccaeb5d5698c4613858ba7783c540f0e1d084b3e348063749a"
+      );
+      var cardsPromise = trello.getListsOnBoard("5e93f15200669f33e504f331");
+      cardsPromise.then((cards) => {
+        console.log(cards)
+      });
+    },
+
     convertData() {
       if (this.data != undefined) {
-        let cards = this.data.map(card => {
+        let cards = this.data.map((card) => {
           let listId = card.idList;
           return listId;
         });
@@ -34,11 +47,11 @@ export default {
     },
 
     setStates() {
-      let toDo = this.list.filter(id => id == "5e93f1619d3ddd839efd7857")
+      let toDo = this.list.filter((id) => id == "5e93f1619d3ddd839efd7857")
         .length;
-      let doing = this.list.filter(id => id == "5e93f1643458932cd6bae158")
+      let doing = this.list.filter((id) => id == "5e93f1643458932cd6bae158")
         .length;
-      let done = this.list.filter(id => id == "5e93f1679030046a66c83cb1")
+      let done = this.list.filter((id) => id == "5e93f1679030046a66c83cb1")
         .length;
 
       this.toDo = toDo;
@@ -49,20 +62,20 @@ export default {
     getData() {
       const fetch = require("node-fetch");
       fetch("https://api.trello.com/1/boards/5e93f15200669f33e504f331/cards", {
-        method: "GET"
+        method: "GET",
       })
-        .then(response => {
+        .then((response) => {
           console.log(`Response: ${response.status} ${response.statusText}`);
           return response.text(response);
         })
-        .then(data => {
+        .then((data) => {
           this.data = JSON.parse(data);
           this.convertData();
           this.setStates();
         })
-        .catch(err => console.error(err));
-    }
-  }
+        .catch((err) => console.error(err));
+    },
+  },
 };
 </script>
 
