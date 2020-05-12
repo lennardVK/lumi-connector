@@ -16,26 +16,30 @@ export default {
       toDo: 0,
       doing: 0,
       done: 0,
-      btnCallback: function (t, opts) {
+      btnCallback: function(t, opts) {
         console.log(t, opts);
         return t.popup({
-          title: 'Snooze Card',
-          items: [{
-            text: 'Choose Time',
-            callback: function (t, opts) { console.log(t, opts); }
-          }, {
-            text: 'In 1 hour',
-            callback: function (t, opts) { console.log(t, opts); }
-          }]
+          title: "Snooze Card",
+          items: [
+            {
+              text: "Choose Time",
+              callback: function() {},
+            },
+            {
+              text: "In 1 hour",
+              callback: function() {},
+            },
+          ],
         });
-      }
+      },
     };
   },
-  
+
   created() {
     this.initTrello();
     setInterval(() => {
       this.getData();
+      this.storeData()
     }, 1000);
   },
   methods: {
@@ -49,18 +53,7 @@ export default {
         console.log(cards);
       });
 
-      trello.initialize({
-        "card-buttons": function(t, options) {
-          console.log(t, options)
-          return [
-            {
-              text: "Estimate Size",
-              icon: "https://cdn.glitch.com/1b42d7fe-bda8-4af8-a6c8-eff0cea9e08a%2Frocket-ship.png?1494946700421",
-              callback: this.btnCallback
-            },
-          ];
-        },
-      });
+      
     },
 
     convertData() {
@@ -101,6 +94,15 @@ export default {
           this.setStates();
         })
         .catch((err) => console.error(err));
+    },
+
+    storeData() {
+      let dataArr = [this.toDo, this.doing, this.done]
+      const newArr = JSON.stringify(dataArr);
+
+      window.localStorage.setItem("dataArr", newArr);
+      console.log(JSON.parse(window.localStorage.getItem("dataArr")));
+
     },
   },
 };
