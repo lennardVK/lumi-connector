@@ -9,6 +9,7 @@
 
 <script>
 import Trello from "trello";
+import Paho from "paho-mqtt";
 export default {
   data() {
     return {
@@ -36,11 +37,13 @@ export default {
   },
 
   created() {
+    
     this.initTrello();
     setInterval(() => {
       this.getData();
-      this.storeData()
+      if(this.toDo != undefined) this.sendDataToClient(this.toDo,this.doing,this.done);
     }, 1000);
+    
   },
   methods: {
     initTrello() {
@@ -52,8 +55,6 @@ export default {
       cardsPromise.then((cards) => {
         console.log(cards);
       });
-
-      
     },
 
     convertData() {
@@ -95,14 +96,50 @@ export default {
         })
         .catch((err) => console.error(err));
     },
+    sendDataToClient(toDo,doing,done) {
+      var client = new Paho.Client(
+        "m23.cloudmqtt.com",
+        32393,
+        "web_76237631862"
+      );
 
-    storeData() {
-      let dataArr = [this.toDo, this.doing, this.done]
-      const newArr = JSON.stringify(dataArr);
+      client.onConnectionLost = onConnectionLost;
+      client.onMessageArrived = onMessageArrived;
+      var options = {
+        useSSL: true,
+        userName: "wuwwvtjf",
+        password: "6kpbhse5aRbA",
+        onSuccess: onConnect,
+        onFailure: doFail,
+      };
+      client.connect(options);
+      
+      // called when the client connects
+      function onConnect() {
+        // Once a connection has been made, make a subscription and send a message.
+        client.subscribe("/lumiData");
+        let message = new Paho.Message("Hello CloudMQTT");
+        message.destinationName = "/lumiData";
+        client.publish("/toDo", `${toDo}`, 1, false)
+        client.publish("/doing", `${doing}`, 1, false)
+        client.publish("/done", `${done}`, 1, false)
+      }
 
-      window.localStorage.setItem("dataArr", newArr);
-      console.log(JSON.parse(window.localStorage.getItem("dataArr")));
+      function doFail(e) {
+        console.log("failed:",e);
+      }
 
+      // called when the client loses its connection
+      function onConnectionLost(responseObject) {
+        if (responseObject.errorCode !== 0) {
+          console.log("onConnectionLost:" + responseObject.errorMessage);
+        }
+      }
+
+      // called when a message arrives
+      function onMessageArrived(message) {
+        console.log("onMessageArrived:" + message.payloadString);
+      }
     },
   },
 };
