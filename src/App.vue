@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import Trello from "trello";
+//import Trello from "trello";
 import Paho from "paho-mqtt";
 export default {
   data() {
@@ -17,7 +17,8 @@ export default {
       toDo: 0,
       doing: 0,
       done: 0,
-      btnCallback: function(t, opts) {
+
+     /* btnCallback: function(t, opts) {
         console.log(t, opts);
         return t.popup({
           title: "Snooze Card",
@@ -32,20 +33,21 @@ export default {
             },
           ],
         });
-      },
+      },*/
     };
   },
 
   created() {
-    
-    this.initTrello();
+
+    //this.initTrello();
     setInterval(() => {
       this.getData();
-      if(this.toDo != undefined) this.sendDataToClient(this.toDo,this.doing,this.done);
-    }, 1000);
-    
+      if (this.toDo != undefined)
+        this.sendDataToClient(this.toDo, this.doing, this.done);
+    }, 3000);
   },
   methods: {
+    /*
     initTrello() {
       let trello = new Trello(
         "e0bb68c2d5670dfd4e12f6b8717522eb",
@@ -56,7 +58,7 @@ export default {
         console.log(cards);
       });
     },
-
+    */
     convertData() {
       if (this.data != undefined) {
         let cards = this.data.map((card) => {
@@ -80,6 +82,7 @@ export default {
       this.done = done;
     },
 
+
     getData() {
       const fetch = require("node-fetch");
       fetch("https://api.trello.com/1/boards/5e93f15200669f33e504f331/cards", {
@@ -96,7 +99,9 @@ export default {
         })
         .catch((err) => console.error(err));
     },
-    sendDataToClient(toDo,doing,done) {
+
+    
+    sendDataToClient(toDo, doing, done) {
       var client = new Paho.Client(
         "m23.cloudmqtt.com",
         32393,
@@ -112,21 +117,25 @@ export default {
         onSuccess: onConnect,
         onFailure: doFail,
       };
-      client.connect(options);
-      
+
+      setTimeout(function() {
+        console.log("hello");
+        client.connect(options);
+      }, 3000);
+
       // called when the client connects
       function onConnect() {
-        // Once a connection has been made, make a subscription and send a message.
-        client.subscribe("/lumiData");
+       // client.subscribe("/lumiData");
         let message = new Paho.Message("Hello CloudMQTT");
         message.destinationName = "/lumiData";
-        client.publish("/toDo", `${toDo}`, 1, false)
-        client.publish("/doing", `${doing}`, 1, false)
-        client.publish("/done", `${done}`, 1, false)
+        client.publish("/toDo", `${toDo}`, 1, false);
+        client.publish("/doing", `${doing}`, 1, false);
+        client.publish("/done", `${done}`, 1, false);
+        // Once a connection has been made, make a subscription and send a message.
       }
 
       function doFail(e) {
-        console.log("failed:",e);
+        console.log("failed:", e);
       }
 
       // called when the client loses its connection
