@@ -1,64 +1,88 @@
 <template>
   <div id="app">
-    <div>To do: {{ toDo }}</div>
-    <div>Doing: {{ doing }}</div>
-    <div>Done: {{ done }}</div>
+    <div>To do: {{ taskClasses[0].toDo }}</div>
+    <div>Doing: {{ taskClasses[1].doing }}</div>
+    <div>Done: {{ taskClasses[2].done }}</div>
     <router-view />
   </div>
 </template>
 
 <script>
 //import Trello from "trello";
-import Paho from "paho-mqtt";
+
+/*
+// Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyCdcmJIJwAK2R_szOKq5wSZRMyHgmlDQB4",
+    authDomain: "lumi-4cfbe.firebaseapp.com",
+    databaseURL: "https://lumi-4cfbe.firebaseio.com",
+    projectId: "lumi-4cfbe",
+    storageBucket: "lumi-4cfbe.appspot.com",
+    messagingSenderId: "734377005425",
+    appId: "1:734377005425:web:86a220e5b0477e417326d0",
+    measurementId: "G-E1QV7PG4D9"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+ */
+import Vue from "vue";
+
+import { vuexfireMutations } from "vuexfire";
+import { db } from "./db";
+import Vuex from "vuex";
+
+Vue.use(Vuex);
+
 export default {
   data() {
     return {
       data: Object,
-      toDo: 0,
-      doing: 0,
-      done: 0,
-
-     /* btnCallback: function(t, opts) {
-        console.log(t, opts);
-        return t.popup({
-          title: "Snooze Card",
-          items: [
-            {
-              text: "Choose Time",
-              callback: function() {},
-            },
-            {
-              text: "In 1 hour",
-              callback: function() {},
-            },
-          ],
-        });
-      },*/
+      classes: ["toDo","doing","done"],
+      taskClasses: [{ toDo: 1 }, { doing: 1 }, { done: 1 }],
     };
   },
+  state: 0,
+
+  mutations: vuexfireMutations,
 
   created() {
-
-    //this.initTrello();
+    //const documentId = "lumi-4cfbe"
+    
     setInterval(() => {
       this.getData();
-      if (this.toDo != undefined)
-        this.sendDataToClient(this.toDo, this.doing, this.done);
+      if (
+        this.taskClasses[0].toDo &&
+        this.taskClasses[1].doing &&
+        this.taskClasses[2].done
+      ) {
+      
+        this.sendTasks(this.taskClasses[0].toDo,"toDo")
+        this.sendTasks(this.taskClasses[1].doing,"doing")
+        this.sendTasks(this.taskClasses[2].done,"done")
+      }
     }, 3000);
   },
   methods: {
-    /*
-    initTrello() {
-      let trello = new Trello(
-        "e0bb68c2d5670dfd4e12f6b8717522eb",
-        "3d4f06e55cba12ccaeb5d5698c4613858ba7783c540f0e1d084b3e348063749a"
-      );
-      var cardsPromise = trello.getListsOnBoard("5e93f15200669f33e504f331");
-      cardsPromise.then((cards) => {
-        console.log(cards);
-      });
+
+
+    sendTasks(tasks, name) {
+      var toDoRef = db.collection("TaskClasses").doc(name);
+
+        // Set the "capital" field of the city 'DC'
+        return toDoRef
+          .update({
+            tasks: tasks,
+          })
+          .then(function() {
+            console.log("Document successfully updated!");
+          })
+          .catch(function(error) {
+            // The document probably doesn't exist.
+            console.error("Error updating document: ", error);
+          });
     },
-    */
+
     convertData() {
       if (this.data != undefined) {
         let cards = this.data.map((card) => {
@@ -68,7 +92,6 @@ export default {
         this.list = cards;
       }
     },
-
     setStates() {
       let toDo = this.list.filter((id) => id == "5e93f1619d3ddd839efd7857")
         .length;
@@ -76,79 +99,27 @@ export default {
         .length;
       let done = this.list.filter((id) => id == "5e93f1679030046a66c83cb1")
         .length;
-
-      this.toDo = toDo;
-      this.doing = doing;
-      this.done = done;
+      this.taskClasses[0].toDo = toDo;
+      this.taskClasses[1].doing = doing;
+      this.taskClasses[2].done = done;
+      //console.log(this.taskClasses);
     },
-
-
     getData() {
       const fetch = require("node-fetch");
       fetch("https://api.trello.com/1/boards/5e93f15200669f33e504f331/cards", {
         method: "GET",
       })
         .then((response) => {
-          console.log(`Response: ${response.status} ${response.statusText}`);
+          //console.log(`Response: ${response.status} ${response.statusText}`);
           return response.text(response);
         })
         .then((data) => {
           this.data = JSON.parse(data);
+
           this.convertData();
           this.setStates();
         })
         .catch((err) => console.error(err));
-    },
-
-    
-    sendDataToClient(toDo, doing, done) {
-      var client = new Paho.Client(
-        "m23.cloudmqtt.com",
-        32393,
-        "web_76237631862"
-      );
-
-      client.onConnectionLost = onConnectionLost;
-      client.onMessageArrived = onMessageArrived;
-      var options = {
-        useSSL: true,
-        userName: "wuwwvtjf",
-        password: "6kpbhse5aRbA",
-        onSuccess: onConnect,
-        onFailure: doFail,
-      };
-
-      setTimeout(function() {
-        console.log("hello");
-        client.connect(options);
-      }, 3000);
-
-      // called when the client connects
-      function onConnect() {
-       // client.subscribe("/lumiData");
-        let message = new Paho.Message("Hello CloudMQTT");
-        message.destinationName = "/lumiData";
-        client.publish("/toDo", `${toDo}`, 1, false);
-        client.publish("/doing", `${doing}`, 1, false);
-        client.publish("/done", `${done}`, 1, false);
-        // Once a connection has been made, make a subscription and send a message.
-      }
-
-      function doFail(e) {
-        console.log("failed:", e);
-      }
-
-      // called when the client loses its connection
-      function onConnectionLost(responseObject) {
-        if (responseObject.errorCode !== 0) {
-          console.log("onConnectionLost:" + responseObject.errorMessage);
-        }
-      }
-
-      // called when a message arrives
-      function onMessageArrived(message) {
-        console.log("onMessageArrived:" + message.payloadString);
-      }
     },
   },
 };
